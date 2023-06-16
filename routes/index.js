@@ -5,27 +5,16 @@ const { DateTime } = require("luxon");
 const asyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const he = require("he");
 let Blog = require("../models/blog");
 let User = require("../models/user");
+let Comment = require("../models/comments");
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
   res.json();
 });
 
-router.get("/a", (req, res, next) => {
-  res.json({ message: "welcome to api" });
-});
-
-router.post("/a/posts", verifyToken, (req, res, next) => {
-  jwt.verify(req.token, process.env.SECRET, (err, authData) => {
-    if (err) {
-      res.sendStatus(403);
-    } else {
-      res.json({ message: "post created", authData });
-    }
-  });
-});
 //verify token
 function verifyToken(req, res, next) {
   //Get auth header value
@@ -45,6 +34,7 @@ function verifyToken(req, res, next) {
     res.sendStatus(403);
   }
 }
+
 router.get(
   "/articles",
   asyncHandler(async (req, res, next) => {
@@ -53,45 +43,76 @@ router.get(
     res.json(Blogs);
   })
 );
+router.get(
+  "/frontpage",
+  asyncHandler(async (req, res, next) => {
+    let Blogs = await Blog.find({ published: true })
+      .limit(3)
+      .sort({ date: -1 })
+      .exec();
+    res.json(Blogs);
+  })
+);
 
 router.get(
   "/article/:id",
   asyncHandler(async (req, res, next) => {
     let blog = await Blog.findById(req.params.id).exec();
-    let comments = await Comment.find({ blog: blog._id }).exec();
+    let comments = await Comment.find({ blog: blog._id })
+      .limit(4)
+      .sort({ date: -1 })
+      .exec();
     console.log(blog, comments);
     res.json({ blog, comments });
   })
 );
-router.post(
-  "/article/:id/comment",
+router.get(
+  "/article/:id/all-comments",
   asyncHandler(async (req, res, next) => {
     let blog = await Blog.findById(req.params.id).exec();
-    let comment = new Comment({
-      blog: blog._id,
-      name: req.body.name,
-      content: req.body.content,
-    });
-    await comment.save();
-    res.redirect("/article/:id");
+    let comments = await Comment.find({ blog: blog._id })
+      .sort({ date: -1 })
+      .exec();
+
+    res.json({ comments });
   })
 );
 
+router.post("/article/:id/comment", [
+  body("name", "Invalid name").trim().isLength({ min: 1 }).escape(),
+  body("content", "Invalid comment").trim().isLength({ min: 1 }).escape(),
+  asyncHandler(async (req, res, next) => {
+    let errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.json({ message: "Unsuccessful", errors: errors.array() });
+    } else {
+      const currentDateTime = DateTime.now().toISO();
+      let blog = await Blog.findById(req.params.id).exec();
+      let comment = new Comment({
+        blog: req.params.id,
+        name: req.body.name,
+        content: req.body.content,
+        date: currentDateTime,
+      });
+      await comment.save();
+      res.json({ message: "success" });
+    }
+  }),
+]);
+
 // Author servers!
 
-module.exports = router;
-
 router.post("/login", [
-  body("username", "Invalid username").trim().isLength({ min: 0 }).escape(),
-  body("password", "Invalid password").trim().isLength({ min: 0 }).escape(),
+  body("username", "Invalid username").trim().isLength({ min: 1 }).escape(),
+  body("password", "Invalid password").trim().isLength({ min: 1 }).escape(),
 
   asyncHandler(async (req, res, next) => {
     let errors = validationResult(req);
     if (!errors.isEmpty()) {
       res.json({ message: "Unsuccessful", errors: errors.array() });
     } else {
-      let username = "shrawn";
-      let password = "1234";
+      let username = req.body.username;
+      let password = req.body.password;
       let user = await User.findOne({ username: username });
       if (!user) {
         return res.json({ message: "User does not exist" });
@@ -143,11 +164,12 @@ router.post("/author/blog", [
     .trim()
     .isLength({ min: 3 })
     .escape(),
-  body("image", "Invalid image url").trim().isLength({ min: 1 }).escape(),
   body("content", "Content should be atleast 100 characters")
     .trim()
     .isLength({ min: 100 })
     .escape(),
+  body("image", "Image url is invalid").trim().isLength({ min: 10 }).escape(),
+  body("alt", "Alt for image is required").trim().isLength({ min: 1 }).escape(),
 
   asyncHandler(async (req, res, next) => {
     try {
@@ -157,12 +179,18 @@ router.post("/author/blog", [
         } else {
           const errors = validationResult(req);
           const currentDateTime = DateTime.now().toISO();
+          let publishedStatus = false;
+          if (req.body.published) {
+            publishedStatus = true;
+          }
           let newBlog = new Blog({
             author: authData.user._id,
             title: req.body.title,
-            image: req.body.img,
+            desc: req.body.desc,
+            image: he.decode(req.body.image),
+            alt: req.body.alt,
             content: req.body.content,
-            published: req.body.published,
+            published: publishedStatus,
             date: currentDateTime,
           });
 
@@ -171,7 +199,7 @@ router.post("/author/blog", [
             res.json({ arr });
           } else {
             await newBlog.save();
-            res.send("Success");
+            res.json({ message: "Success", blog: newBlog });
           }
         }
       });
@@ -193,6 +221,9 @@ router.get(
           let blog = await Blog.findById(req.params.id)
             .populate("author")
             .exec();
+
+          // Encode the image URL before sending it in the response
+
           res.json({ blog, authData });
         }
       });
@@ -212,6 +243,8 @@ router.put("/author/:id", verifyToken, [
     .trim()
     .isLength({ min: 100 })
     .escape(),
+  body("image", "Image url is invalid").trim().isLength({ min: 1 }).escape(),
+  body("alt", "Alt for image is required").trim().isLength({ min: 1 }).escape(),
 
   asyncHandler(async (req, res, next) => {
     try {
@@ -224,7 +257,9 @@ router.put("/author/:id", verifyToken, [
           const { id } = req.params;
           const updatedBlog = {
             title: req.body.title,
-            image: req.body.image,
+            desc: req.body.desc,
+            image: he.decode(he.decode(req.body.image)),
+            alt: req.body.alt,
             content: req.body.content,
             published: req.body.published,
             date: currentDateTime,
@@ -252,17 +287,21 @@ router.put("/author/:id", verifyToken, [
 ]);
 
 router.delete(
-  "author/:id",
+  "/author/:id",
   verifyToken,
   asyncHandler(async (req, res, next) => {
-    jwt.verify(req.token, process.env.SECRET, async (err, authData) => {
-      if (err) {
-        res.sendStatus(403);
-      } else {
-        await Blog.findByIdAndRemove(req.params.id);
-        res.json({ message: "successfully removed" });
-      }
-    });
+    try {
+      jwt.verify(req.token, process.env.SECRET, async (err, authData) => {
+        if (err) {
+          res.sendStatus(403);
+        } else {
+          await Blog.findByIdAndRemove(req.params.id);
+          res.json({ message: "successfully removed" });
+        }
+      });
+    } catch (error) {
+      res.sendStatus(403);
+    }
   })
 );
 
