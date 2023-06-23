@@ -57,7 +57,7 @@ router.get(
 router.get(
   "/article/:id",
   asyncHandler(async (req, res, next) => {
-    let blog = await Blog.findById(req.params.id).exec();
+    let blog = await Blog.findById(req.params.id).populate("author").exec();
     let comments = await Comment.find({ blog: blog._id })
       .limit(4)
       .sort({ date: -1 })
