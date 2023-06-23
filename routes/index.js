@@ -185,11 +185,11 @@ router.post("/author/blog", [
           }
           let newBlog = new Blog({
             author: authData.user._id,
-            title: req.body.title,
-            desc: req.body.desc,
+            title: he.decode(req.body.title),
+            desc: he.decode(req.body.desc),
             image: he.decode(req.body.image),
-            alt: req.body.alt,
-            content: req.body.content,
+            alt: he.decode(req.body.alt),
+            content: he.decode(req.body.content),
             published: publishedStatus,
             date: currentDateTime,
           });
@@ -256,11 +256,11 @@ router.put("/author/:id", verifyToken, [
           const currentDateTime = DateTime.now().toISO();
           const { id } = req.params;
           const updatedBlog = {
-            title: req.body.title,
-            desc: req.body.desc,
+            title: he.decode(req.body.title),
+            desc: he.decode(req.body.desc),
             image: he.decode(he.decode(req.body.image)),
-            alt: req.body.alt,
-            content: req.body.content,
+            alt: he.decode(req.body.alt),
+            content: he.decode(req.body.content),
             published: req.body.published,
             date: currentDateTime,
           };
