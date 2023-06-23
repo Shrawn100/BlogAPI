@@ -7,8 +7,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const session = require("express-session");
-const passport = require("passport");
-const localStrategy = require("passport-local").Strategy;
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
