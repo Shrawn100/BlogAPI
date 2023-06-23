@@ -34,14 +34,14 @@ To run the blogging application locally, follow these steps:
 Make sure you have Node.js and MongoDB installed on your machine.
 
 ## Technologies Used
-**Express.js**: Backend framework for building the API routes and handling HTTP requests.
-**MongoDB**: Database for storing blog articles, user information, and comments.
-**Mongoose**: Object Data Modeling (ODM) library for MongoDB, providing a schema-based solution for application data.
-**JWT**: JSON Web Tokens for secure authentication and authorization.
-**bcrypt**: Library for password hashing to securely store user passwords.
-**Express Validator**: Middleware for validating user input and handling form validation errors.
-**Luxon**: Library for working with dates and times.
-**he**: Library for HTML entity encoding and decoding.
+* **Express.js**: Backend framework for building the API routes and handling HTTP requests.
+* **MongoDB**: Database for storing blog articles, user information, and comments.
+* **Mongoose**: Object Data Modeling (ODM) library for MongoDB, providing a schema-based solution for application data.
+* **JWT**: JSON Web Tokens for secure authentication and authorization.
+* **bcrypt**: Library for password hashing to securely store user passwords.
+* **Express Validator**: Middleware for validating user input and handling form validation errors.
+* **Luxon**: Library for working with dates and times.
+* **he**: Library for HTML entity encoding and decoding.
 
 ## License
 This blogging application is open-source and available under the MIT License.
