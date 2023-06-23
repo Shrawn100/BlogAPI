@@ -46,7 +46,7 @@ router.get(
 router.get(
   "/frontpage",
   asyncHandler(async (req, res, next) => {
-    let Blogs = await Blog.find({ published: true })
+    let Blogs = await Blog.find({ frontpage: true, published: true })
       .limit(3)
       .sort({ date: -1 })
       .exec();
