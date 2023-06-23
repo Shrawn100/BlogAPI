@@ -1,5 +1,5 @@
-***Blogging Application***
-This is a blogging application built with Express.js that allows users to read and write blog articles. It provides a user-friendly interface for creating, viewing, and commenting on blog posts. The application includes features for user authentication and authorization, ensuring that only authorized users can create and manage their own blog articles.
+#Blogging Application#
+This is the backend API for a blogging application built with Express.js. The API provides the necessary routes and functionality to manage blog articles and comments. It includes features for user authentication and authorization, allowing authorized users to create, update, and delete their own articles.
 
 **Features**
 User Registration and Login: Users can create an account and log in to the application using their credentials. Passwords are securely hashed using bcrypt to protect user data.
