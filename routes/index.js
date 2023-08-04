@@ -59,22 +59,10 @@ router.get(
   asyncHandler(async (req, res, next) => {
     let blog = await Blog.findById(req.params.id).populate("author").exec();
     let comments = await Comment.find({ blog: blog._id })
-      .limit(4)
       .sort({ date: -1 })
       .exec();
     console.log(blog, comments);
     res.json({ blog, comments });
-  })
-);
-router.get(
-  "/article/:id/all-comments",
-  asyncHandler(async (req, res, next) => {
-    let blog = await Blog.findById(req.params.id).exec();
-    let comments = await Comment.find({ blog: blog._id })
-      .sort({ date: -1 })
-      .exec();
-
-    res.json({ comments });
   })
 );
 
