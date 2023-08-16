@@ -135,6 +135,7 @@ router.get(
             author: authData.user._id,
           })
             .sort({ date: -1 })
+            .populate("author")
             .exec();
 
           res.json(authorsBlogs);
